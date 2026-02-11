@@ -21,6 +21,7 @@ const cardPicker = el('cardPicker');
 const textPicker = el('textPicker');
 const glassPicker = el('glassPicker');
 const mutedPicker = el('mutedPicker');
+const fontSelect = el('fontSelect');
 
 function updateLengthDisplay(){ lengthValue.textContent = lengthInput.value; }
 lengthInput.addEventListener('input', updateLengthDisplay);
@@ -104,10 +105,12 @@ function applyColors(){
   if(t) document.documentElement.style.setProperty('--text', t);
   if(g) document.documentElement.style.setProperty('--glass', g);
   if(m) document.documentElement.style.setProperty('--muted', m);
+  if(fontSelect && fontSelect.value) document.documentElement.style.setProperty('--font-family', fontSelect.value);
 }
 
 const colorInputs = [accentPicker,bgStart,bgEnd,cardPicker,textPicker,glassPicker,mutedPicker].filter(Boolean);
 colorInputs.forEach(inp=> inp.addEventListener('input', applyColors));
+if(fontSelect) fontSelect.addEventListener('change', applyColors);
 
 // Apply initial custom colors on load
 window.addEventListener('load', ()=>{
