@@ -24,13 +24,23 @@
       </div>
 
       <div class="row">
-        <label for="styleSelect">Design:</label>
-        <select id="styleSelect">
-          <option value="modern">Modern</option>
-          <option value="classic">Klassisch</option>
-          <option value="lila">Lila & Orange</option>
-          <option value="neon">Neon</option>
-        </select>
+        <label for="accentPicker">Akzentfarbe:</label>
+        <input id="accentPicker" type="color" value="#ff9a3c">
+      </div>
+
+      <div class="row">
+        <label>Hintergrund (Gradient):</label>
+        <input id="bgStart" type="color" value="#2b0f4a">
+        <input id="bgEnd" type="color" value="#ff7a18">
+      </div>
+
+      <div class="row">
+        <label>Voreinstellungen:</label>
+        <div class="presets">
+          <button class="preset" data-accent="#4fd1c5" data-bgstart="#061226" data-bgend="#071428">Ocean</button>
+          <button class="preset" data-accent="#ff9a3c" data-bgstart="#2b0f4a" data-bgend="#ff7a18">Sunset</button>
+          <button class="preset" data-accent="#ff3ca6" data-bgstart="#0b0f1a" data-bgend="#0f1b4b">Neon</button>
+        </div>
       </div>
 
       <div class="actions">
