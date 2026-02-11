@@ -83,7 +83,7 @@ copyBtn.addEventListener('click', async ()=>{
 });
 
 styleSelect.addEventListener('change', ()=>{
-  document.documentElement.classList.remove('theme-classic','theme-neon');
+  document.documentElement.classList.remove('theme-classic','theme-neon','theme-lila');
   const v = styleSelect.value;
   if(v==='classic') document.documentElement.classList.add('theme-classic');
   if(v==='lila') document.documentElement.classList.add('theme-lila');

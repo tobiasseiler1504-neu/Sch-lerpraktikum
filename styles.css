@@ -8,7 +8,7 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Helvetica,Arial;color:var(--text);background:var(--bg)}
-.container{max-width:680px;margin:48px auto;padding:28px;background:var(--card);border-radius:12px;box-shadow:0 6px 30px var(--shadow)}
+.container{max-width:680px;margin:48px auto;padding:28px;background:transparent;border-radius:12px;box-shadow:none}
 h1{margin:0 0 18px 0;font-size:1.6rem}
 .controls{display:grid;gap:12px;margin-bottom:18px}
 .row{display:flex;align-items:center;gap:12px}
