@@ -197,7 +197,7 @@ const twofaCopy = el('twofaCopy');
 
 const TWOFA_PERIOD = 5; // seconds
 const TWOFA_LENGTH = 5; // characters
-const TWOFA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // avoid ambiguous chars
+const TWOFA_CHARS = '0123456789'; // numeric codes like authenticator apps
 
 function gen2fa(){
   let s = '';
@@ -209,9 +209,10 @@ let twofaNext = Date.now();
 function start2fa(){
   twofaNext = Date.now() + TWOFA_PERIOD*1000;
   twofaCodeEl.textContent = gen2fa();
+  twofaFill.style.width = '100%';
 }
 
-// Update loop — updates progress and rotates when needed
+// Update loop — updates progress and rotates when needed (counts DOWN)
 setInterval(()=>{
   if(!twofaCodeEl) return;
   const now = Date.now();
@@ -220,10 +221,10 @@ setInterval(()=>{
     twofaNext = now + TWOFA_PERIOD*1000;
   }
   const remaining = Math.max(0, twofaNext - now);
-  const pct = Math.round((1 - remaining / (TWOFA_PERIOD*1000)) * 100);
+  const pct = Math.round((remaining / (TWOFA_PERIOD*1000)) * 100); // fill represents time left
   twofaFill.style.width = pct + '%';
-  twofaTimer.textContent = `nächster in ${Math.ceil(remaining/1000)}s`;
-}, 150);
+  twofaTimer.textContent = `wechsel in ${Math.ceil(remaining/1000)}s`;
+}, 100);
 
 twofaCopy.addEventListener('click', async ()=>{
   try{
