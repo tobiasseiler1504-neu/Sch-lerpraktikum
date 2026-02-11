@@ -258,3 +258,219 @@ twofaCopy.addEventListener('click', async ()=>{
 
 // Initialize 2FA on load
 window.addEventListener('load', ()=> start2fa());
+
+// --- Website Security Checker ---
+const urlInput = el('urlInput');
+const checkUrlBtn = el('checkUrlBtn');
+const urlResult = el('urlResult');
+const scoreValue = el('scoreValue');
+const scoreLabel = el('scoreLabel');
+const urlChecks = el('urlChecks');
+const malwareWarning = el('malwareWarning');
+
+// Sicherheits-Check Funktionen
+function validateURL(urlStr){
+  try{
+    const url = new URL(urlStr);
+    return {valid:true,url:url};
+  }catch(e){
+    return {valid:false,error:e.message};
+  }
+}
+
+async function checkSecurityHeaders(urlStr){
+  const headers = {};
+  const checks = [];
+  try{
+    const response = await fetch(urlStr, {method:'HEAD',mode:'no-cors'});
+    // no-cors mode doesn't allow us to read headers, so we try standard fetch
+    const resp2 = await fetch(urlStr, {mode:'cors'}).catch(()=>null);
+    if(resp2){
+      const headerList = ['content-security-policy','x-frame-options','x-content-type-options','strict-transport-security','x-xss-protection','referrer-policy'];
+      let foundCount = 0;
+      headerList.forEach(h=>{
+        if(resp2.headers.has(h)) { headers[h] = resp2.headers.get(h); foundCount++; }
+      });
+      checks.push({name:'Sicherheits-Header',found:foundCount,total:headerList.length});
+    }
+  }catch(e){
+    // Falls CORS nicht erlaubt ist, geben wir Warnung aus
+    checks.push({name:'Sicherheits-Header',found:0,total:6,note:'Prüfung durch CORS blockiert'});
+  }
+  return checks;
+}
+
+async function checkMalwareDatabase(domain){
+  try{
+    // URLhaus free API - Abuse.ch Missbrauchs-Datenbank
+    const response = await fetch(`https://urlhaus-api.abuse.ch/v1/urls/recent/`, {
+      method:'POST',
+      headers:{'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    }).catch(()=>null);
+    
+    if(response && response.ok){
+      const data = await response.json();
+      // Prüfe ob unsere Domain in der Liste verdächtiger Domains ist
+      const results = data.urls || [];
+      const found = results.filter(item=>item.host && item.host.includes(domain));
+      if(found.length > 0){
+        return {malicious:true,count:found.length,details:found[0]};
+      }
+    }
+    return {malicious:false};
+  }catch(e){
+    // Stille Fehlerbehandlung, da API-Abfrage fehlschlag
+    return {malicious:false,error:true};
+  }
+}
+
+function checkDomainSuspicion(url){
+  const issues = [];
+  const domain = url.hostname.toLowerCase();
+  
+  // Verdächtige TLDs
+  const suspiciousTlds = ['.tk','.ml','.ga','.cf','.buzz','.xn--','.xyz','.top','.date','.download','.science'];
+  for(const tld of suspiciousTlds){
+    if(domain.endsWith(tld)) issues.push(`Verdächtige TLD: ${tld}`);
+  }
+  
+  // IP-Adressen statt Domain
+  if(/^[0-9.]+$/.test(domain)) issues.push('Domain ist eine IP-Adresse (verdächtig)');
+  
+  // Sehr lange Domain
+  if(domain.length > 50) issues.push('Domain ist ungewöhnlich lang');
+  
+  // Punycode (internationalisierte Domains) - können für Typosquatting missbraucht werden
+  if(domain.includes('xn--')) issues.push('Punycode-Domain erkannt (möglicherweise Typosquatting)');
+  
+  // Häufige Typosquatting-Ziele
+  const commonTargets = ['paypal','amazon','apple','microsoft','google','facebook','instagram','twitter','netflix','bank'];
+  const hasSuspiciousName = commonTargets.some(target=>domain.includes(target) && domain !== target);
+  if(hasSuspiciousName) issues.push('Domain könnte Typosquatting-Versuch sein');
+  
+  return issues;
+}
+
+async function performSecurityCheck(){
+  if(!urlInput.value.trim()){
+    alert('Bitte eine URL eingeben.');
+    return;
+  }
+  
+  checkUrlBtn.disabled = true;
+  checkUrlBtn.textContent = 'Prüfe...';
+  urlChecks.innerHTML = '<div style="color:var(--muted);">Prüfung wird durchgeführt...</div>';
+  urlResult.style.display = 'block';
+  
+  const urlValidation = validateURL(urlInput.value.trim());
+  if(!urlValidation.valid){
+    urlChecks.innerHTML = `<div class="check-item bad"><span class="check-icon">✗</span> Ungültige URL: ${urlValidation.error}</div>`;
+    scoreValue.textContent = '0';
+    scoreLabel.textContent = 'Ungültig';
+    checkUrlBtn.disabled = false;
+    checkUrlBtn.textContent = 'Prüfen';
+    return;
+  }
+  
+  const url = urlValidation.url;
+  const checks = [];
+  const domain = url.hostname;
+  
+  // 1. HTTPS Check
+  const isHttps = url.protocol === 'https:';
+  checks.push({
+    name:'HTTPS verschlüsselt',
+    status:isHttps ? 'good' : 'bad',
+    message:isHttps ? 'HTTPS aktiv ✓' : 'HTTP unsicher ✗'
+  });
+  
+  // 2. Domain-Suspicion-Checks
+  const suspicions = checkDomainSuspicion(url);
+  if(suspicions.length === 0){
+    checks.push({
+      name:'Domain-Reputation',
+      status:'good',
+      message:'Domain sieht legitim aus ✓'
+    });
+  }else{
+    suspicions.forEach(issue=>{
+      checks.push({
+        name:'Domain-Warnung',
+        status:'bad',
+        message:issue + ' ✗'
+      });
+    });
+  }
+  
+  // 3. Sicherheits-Header prüfen
+  const headerChecks = await checkSecurityHeaders(url.toString());
+  headerChecks.forEach(hc=>{
+    const pct = hc.total > 0 ? Math.round((hc.found/hc.total)*100) : 0;
+    const status = pct >= 60 ? 'good' : (pct >= 30 ? 'warning' : 'bad');
+    checks.push({
+      name:'Sicherheits-Header',
+      status:status,
+      message:`${hc.found}/${hc.total} Header gefunden (${pct}%) ${hc.note ? '- ' + hc.note : ''}`
+    });
+  });
+  
+  // 4. Malware-Datenbank prüfen
+  const malwareCheck = await checkMalwareDatabase(domain);
+  if(!malwareCheck.error){
+    if(malwareCheck.malicious){
+      checks.push({
+        name:'Missbrauchs-Datenbank',
+        status:'bad',
+        message:'Domain in Missbrauchs-Liste gefunden ✗'
+      });
+      malwareWarning.textContent = `WARNUNG: Diese Domain wurde in Missbrauchs-Datenbanken gefunden. ${malwareCheck.count} verdächtige URLs entdeckt.`;
+      malwareWarning.style.display = 'flex';
+    }else{
+      checks.push({
+        name:'Missbrauchs-Datenbank',
+        status:'good',
+        message:'Nicht in bekannten Missbrauchs-Listen ✓'
+      });
+      malwareWarning.style.display = 'none';
+    }
+  }
+  
+  // Score berechnen
+  const goodCount = checks.filter(c=>c.status==='good').length;
+  const badCount = checks.filter(c=>c.status==='bad').length;
+  const totalScore = Math.max(0, Math.round(((goodCount - badCount*2) / checks.length) * 100));
+  
+  scoreValue.textContent = totalScore;
+  
+  // Label basierend auf Score
+  let label = '⚠️ Unsicher';
+  if(totalScore >= 80) label = '🟢 Sehr sicher';
+  else if(totalScore >= 60) label = '🟡 Sicher';
+  else if(totalScore >= 40) label = '🟠 Warnung';
+  else label = '🔴 Unsicher';
+  
+  scoreLabel.textContent = label;
+  
+  // Ergebnisse anzeigen
+  urlChecks.innerHTML = '';
+  checks.forEach(check=>{
+    const div = document.createElement('div');
+    div.className = `check-item ${check.status}`;
+    const icon = check.status === 'good' ? '✓' : (check.status === 'warning' ? '◐' : '✗');
+    div.innerHTML = `<span class="check-icon">${icon}</span><span><strong>${check.name}:</strong> ${check.message}</span>`;
+    urlChecks.appendChild(div);
+  });
+  
+  checkUrlBtn.disabled = false;
+  checkUrlBtn.textContent = 'Prüfen';
+}
+
+checkUrlBtn.addEventListener('click', ()=> performSecurityCheck());
+urlInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') performSecurityCheck(); });
+
+// Initiale Prüfung beim Laden
+window.addEventListener('load', ()=>{
+  // Optional: automatische Prüfung der Beispiel-URL durchführen
+});
+
