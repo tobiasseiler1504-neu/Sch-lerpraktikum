@@ -63,7 +63,12 @@ function generatePassword(){
 
 generateBtn.addEventListener('click', ()=>{
   const pw = generatePassword();
-  if(pw) passwordOut.value = pw;
+  if(pw){
+    passwordOut.value = pw;
+    // also update checker UI and fill the checker input for quick re-check
+    try{ checkInput.value = pw; }catch(e){}
+    try{ updateCheckerUI(pw); }catch(e){}
+  }
 });
 
 copyBtn.addEventListener('click', async ()=>{
