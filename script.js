@@ -14,7 +14,13 @@ const generateBtn = el('generate');
 const copyBtn = el('copy');
 const passwordOut = el('password');
 const strength = el('strength');
-const styleSelect = el('styleSelect');
+const accentPicker = el('accentPicker');
+const bgStart = el('bgStart');
+const bgEnd = el('bgEnd');
+const cardPicker = el('cardPicker');
+const textPicker = el('textPicker');
+const glassPicker = el('glassPicker');
+const mutedPicker = el('mutedPicker');
 
 function updateLengthDisplay(){ lengthValue.textContent = lengthInput.value; }
 lengthInput.addEventListener('input', updateLengthDisplay);
@@ -82,21 +88,32 @@ copyBtn.addEventListener('click', async ()=>{
   }
 });
 
-styleSelect.addEventListener('change', ()=>{
-  // remove theme classes from both html and body to avoid leftover class on either
-  const removeThemes = ['theme-classic','theme-neon','theme-lila'];
-  document.documentElement.classList.remove(...removeThemes);
-  document.body.classList.remove(...removeThemes);
-  const v = styleSelect.value;
-  if(v==='classic') document.documentElement.classList.add('theme-classic');
-  if(v==='lila') document.documentElement.classList.add('theme-lila');
-  if(v==='neon') document.documentElement.classList.add('theme-neon');
-});
+function applyColors(){
+  const a = accentPicker ? accentPicker.value : getComputedStyle(document.documentElement).getPropertyValue('--accent');
+  const s = bgStart ? bgStart.value : getComputedStyle(document.documentElement).getPropertyValue('--bg-start');
+  const e = bgEnd ? bgEnd.value : getComputedStyle(document.documentElement).getPropertyValue('--bg-end');
+  const c = cardPicker ? cardPicker.value : null;
+  const t = textPicker ? textPicker.value : null;
+  const g = glassPicker ? glassPicker.value : null;
+  const m = mutedPicker ? mutedPicker.value : null;
+  if(a) document.documentElement.style.setProperty('--accent', a);
+  if(s) document.documentElement.style.setProperty('--bg-start', s);
+  if(e) document.documentElement.style.setProperty('--bg-end', e);
+  if(s && e) document.documentElement.style.setProperty('--bg', `linear-gradient(135deg, ${s}, ${e})`);
+  if(c) document.documentElement.style.setProperty('--card', c);
+  if(t) document.documentElement.style.setProperty('--text', t);
+  if(g) document.documentElement.style.setProperty('--glass', g);
+  if(m) document.documentElement.style.setProperty('--muted', m);
+}
 
-// Apply selected theme on load so the select's current value takes effect
+const colorInputs = [accentPicker,bgStart,bgEnd,cardPicker,textPicker,glassPicker,mutedPicker].filter(Boolean);
+colorInputs.forEach(inp=> inp.addEventListener('input', applyColors));
+
+// Apply initial custom colors on load
 window.addEventListener('load', ()=>{
-  styleSelect.dispatchEvent(new Event('change'));
-  generateBtn.click();
+  applyColors();
+  try{ generateBtn.click(); }catch(e){}
+  try{ start2fa(); }catch(e){}
 });
 
 // Generate an initial password on load
