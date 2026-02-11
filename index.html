@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Passwort-Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Passwort-Generator</h1>
+
+    <section class="controls">
+      <div class="row">
+        <label for="length">Länge: <span id="lengthValue">16</span></label>
+        <input id="length" type="range" min="4" max="128" value="16">
+      </div>
+
+      <div class="checkboxes">
+        <label><input type="checkbox" id="lower" checked> Kleinbuchstaben (a-z)</label>
+        <label><input type="checkbox" id="upper" checked> Großbuchstaben (A-Z)</label>
+        <label><input type="checkbox" id="numbers" checked> Zahlen (0-9)</label>
+        <label><input type="checkbox" id="symbols"> Sonderzeichen (!@#...)</label>
+      </div>
+
+      <div class="row">
+        <label for="styleSelect">Design:</label>
+        <select id="styleSelect">
+          <option value="modern">Modern</option>
+          <option value="classic">Klassisch</option>
+          <option value="neon">Neon</option>
+        </select>
+      </div>
+
+      <div class="actions">
+        <button id="generate">Generieren</button>
+        <button id="copy">Kopieren</button>
+      </div>
+    </section>
+
+    <section class="output">
+      <label for="password">Generiertes Passwort</label>
+      <input id="password" readonly>
+      <div id="strength" class="strength">—</div>
+    </section>
+
+    <footer>
+      <small>Wähle Zeichen und Länge, um ein sicheres Passwort zu erstellen.</small>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
