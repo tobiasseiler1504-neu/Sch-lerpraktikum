@@ -83,11 +83,20 @@ copyBtn.addEventListener('click', async ()=>{
 });
 
 styleSelect.addEventListener('change', ()=>{
-  document.documentElement.classList.remove('theme-classic','theme-neon','theme-lila');
+  // remove theme classes from both html and body to avoid leftover class on either
+  const removeThemes = ['theme-classic','theme-neon','theme-lila'];
+  document.documentElement.classList.remove(...removeThemes);
+  document.body.classList.remove(...removeThemes);
   const v = styleSelect.value;
   if(v==='classic') document.documentElement.classList.add('theme-classic');
   if(v==='lila') document.documentElement.classList.add('theme-lila');
   if(v==='neon') document.documentElement.classList.add('theme-neon');
+});
+
+// Apply selected theme on load so the select's current value takes effect
+window.addEventListener('load', ()=>{
+  styleSelect.dispatchEvent(new Event('change'));
+  generateBtn.click();
 });
 
 // Generate an initial password on load
