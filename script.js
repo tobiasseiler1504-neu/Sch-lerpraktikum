@@ -188,3 +188,52 @@ function updateCheckerUI(pw){
 
 checkBtn.addEventListener('click', ()=> updateCheckerUI(checkInput.value));
 checkInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') updateCheckerUI(checkInput.value); });
+
+// --- 2FA Code (rotating every 5 seconds) ---
+const twofaCodeEl = el('twofaCode');
+const twofaFill = el('twofaFill');
+const twofaTimer = el('twofaTimer');
+const twofaCopy = el('twofaCopy');
+
+const TWOFA_PERIOD = 5; // seconds
+const TWOFA_LENGTH = 5; // characters
+const TWOFA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // avoid ambiguous chars
+
+function gen2fa(){
+  let s = '';
+  for(let i=0;i<TWOFA_LENGTH;i++) s += TWOFA_CHARS[Math.floor(Math.random()*TWOFA_CHARS.length)];
+  return s;
+}
+
+let twofaNext = Date.now();
+function start2fa(){
+  twofaNext = Date.now() + TWOFA_PERIOD*1000;
+  twofaCodeEl.textContent = gen2fa();
+}
+
+// Update loop — updates progress and rotates when needed
+setInterval(()=>{
+  if(!twofaCodeEl) return;
+  const now = Date.now();
+  if(now >= twofaNext){
+    twofaCodeEl.textContent = gen2fa();
+    twofaNext = now + TWOFA_PERIOD*1000;
+  }
+  const remaining = Math.max(0, twofaNext - now);
+  const pct = Math.round((1 - remaining / (TWOFA_PERIOD*1000)) * 100);
+  twofaFill.style.width = pct + '%';
+  twofaTimer.textContent = `nächster in ${Math.ceil(remaining/1000)}s`;
+}, 150);
+
+twofaCopy.addEventListener('click', async ()=>{
+  try{
+    await navigator.clipboard.writeText(twofaCodeEl.textContent);
+    twofaCopy.textContent = 'Kopiert ✓';
+    setTimeout(()=>twofaCopy.textContent='Kopieren',1000);
+  }catch(e){
+    alert('Kopieren fehlgeschlagen.');
+  }
+});
+
+// Initialize 2FA on load
+window.addEventListener('load', ()=> start2fa());
